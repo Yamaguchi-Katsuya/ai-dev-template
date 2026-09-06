@@ -1,0 +1,63 @@
+.gitignore
+  s_26fbea4ca08690::t_caa9d72eaa515c 1
+README.md
+  s_26fbea4ca08690::t_827c25dfe3e4ae 1-145
+init.sh
+  s_26fbea4ca08690::t_3a4ee35980acb1 1-215
+template/.claude/commands/bootstrap.md.tmpl
+  s_26fbea4ca08690::t_6e772b83738f26 1-93
+template/.claude/settings.local.json.example.tmpl
+  s_26fbea4ca08690::t_44dde8c380b52b 1-4
+template/.gitignore.tmpl
+  s_26fbea4ca08690::t_f0dcc9e7136f74 1-22
+template/README.md.tmpl
+  s_26fbea4ca08690::t_0b853e52679711 1-73
+template/dev/CLAUDE.md.tmpl
+  s_26fbea4ca08690::t_eb16142634b336 1-150
+template/dev/slot-N/CLAUDE.md.tmpl
+  s_26fbea4ca08690::t_a8d75cf784e29c 1-13
+template/dev/slot-setup-guide.md.tmpl
+  s_26fbea4ca08690::t_1f77d06196ca68 1-71
+template/docs/branch-structure.md.tmpl
+  s_26fbea4ca08690::t_043ba4ea8b56dc 1-30
+template/docs/environment-overview.md.tmpl
+  s_26fbea4ca08690::t_ebde51717419fa 1-93
+template/docs/planning.md
+  s_26fbea4ca08690::t_f70bbcedf33690 1-21
+template/docs/worktree-structure.md
+  s_26fbea4ca08690::t_dad2472b3f04e6 1-35
+template/investigate/CLAUDE.md.tmpl
+  s_26fbea4ca08690::t_40bd9676859721 1-110
+template/investigate/investigation-guide.md.tmpl
+  s_26fbea4ca08690::t_a1a5a112d50a86 1-62
+template/knowledge/CLAUDE.md.tmpl
+  s_26fbea4ca08690::t_7ea8df1ebb4cf6 1-196
+template/ops/CLAUDE.md.tmpl
+  s_26fbea4ca08690::t_2865f207bce189 1-37
+template/repos.conf
+  s_26fbea4ca08690::t_ed3c83403d6ddc 1-20
+template/review/CLAUDE.md.tmpl
+  s_26fbea4ca08690::t_c924860bace67f 1-73
+template/review/review-guidelines.md.tmpl
+  s_26fbea4ca08690::t_c5d096fb144a28 1-131
+template/setup.sh.tmpl
+  s_26fbea4ca08690::t_81f3ee1cb9fceb 1-174
+template/CLAUDE.md.tmpl
+  s_26fbea4ca08690::t_15e7329f086b3d 1-16
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.2",
+  "base_commit_sha": "24abf0e4c8eca2d7685af35dd93105bc01bf87b5",
+  "prompts": {},
+  "sessions": {
+    "s_26fbea4ca08690": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "24c09727-9fc3-4564-8ec5-3cb4ff3d2cde",
+        "model": "claude-opus-5"
+      },
+      "human_author": "katsuya yamaguchi <y.katsuya1116@gmail.com>"
+    }
+  }
+}
