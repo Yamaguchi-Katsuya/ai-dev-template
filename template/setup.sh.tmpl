@@ -1,0 +1,174 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# --------------------------------------------------
+# {{PROJECT_NAME}} setup script
+#
+# repos.conf を読み、各リポジトリを .bare/ に bare clone してから
+# 各エージェント配下の repos/<name>/ に worktree を展開する。
+#
+# 冪等。リポジトリを追加したら repos.conf に追記して再実行するだけでよい。
+#
+# Prerequisites: git, gh CLI (private repo の場合)
+# --------------------------------------------------
+
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+REPOS_CONF="$SCRIPT_DIR/repos.conf"
+BARE_DIR="$SCRIPT_DIR/.bare"
+
+if [[ ! -f "$REPOS_CONF" ]]; then
+  echo "ERROR: repos.conf が見つかりません: $REPOS_CONF"
+  echo "  repos.conf.example をコピーして対象リポジトリを記入してください。"
+  exit 1
+fi
+
+# --------------------------------------------------
+# Parse repos.conf
+#   形式: <name> <url-or-path> <base-branch>
+#   '#' 始まりの行と空行は無視
+# --------------------------------------------------
+
+declare -a REPO_NAMES=()
+declare -a REPO_URLS=()
+declare -a REPO_BRANCHES=()
+
+while read -r name url branch _rest; do
+  [[ -z "${name:-}" ]] && continue
+  [[ "$name" == \#* ]] && continue
+
+  if [[ -z "${url:-}" || -z "${branch:-}" ]]; then
+    echo "ERROR: repos.conf の行が不正です（name / url / base-branch の3列が必要）: $name"
+    exit 1
+  fi
+
+  REPO_NAMES+=("$name")
+  REPO_URLS+=("$url")
+  REPO_BRANCHES+=("$branch")
+done < "$REPOS_CONF"
+
+if [[ ${#REPO_NAMES[@]} -eq 0 ]]; then
+  echo "WARN: repos.conf に有効なリポジトリ定義がありません。"
+  echo "  リポジトリが共有されたら repos.conf に追記して再実行してください。"
+  echo ""
+fi
+
+# --------------------------------------------------
+# Clone / update bare repositories
+# --------------------------------------------------
+
+mkdir -p "$BARE_DIR"
+
+for i in "${!REPO_NAMES[@]}"; do
+  name="${REPO_NAMES[$i]}"
+  url="${REPO_URLS[$i]}"
+  bare="$BARE_DIR/${name}.git"
+
+  if [[ -d "$bare" ]]; then
+    echo "==> [$name] 既存の bare リポジトリを更新中..."
+    git -C "$bare" fetch origin --prune --quiet
+  else
+    echo "==> [$name] bare clone 中: $url"
+    git clone --bare --quiet "$url" "$bare"
+    # bare clone は remote 追跡用の refspec を設定しないので明示的に入れる
+    git -C "$bare" config remote.origin.fetch '+refs/heads/*:refs/remotes/origin/*'
+    git -C "$bare" fetch origin --quiet
+  fi
+done
+
+# --------------------------------------------------
+# Create worktrees
+# --------------------------------------------------
+
+# 全エージェントが全リポジトリを横断的に読めるよう、
+# dev の各スロット・investigate・review すべてに全リポジトリを展開する。
+#
+# すべて detached HEAD で作成する。
+# 同一ブランチを複数 worktree で同時 checkout できない git の制約を回避するため。
+# dev で作業する際は各 repos/<name>/ で作業ブランチを切ること。
+
+create_worktree() {
+  local bare="$1" target_dir="$2" ref="$3" label="$4"
+
+  if [[ -e "$target_dir/.git" ]]; then
+    echo "  [skip]   $label (already exists)"
+    return
+  fi
+
+  # worktree ではない残骸ディレクトリがあれば掃除する
+  if [[ -d "$target_dir" ]]; then
+    rmdir "$target_dir" 2>/dev/null || {
+      echo "  [warn]   $label (空でないディレクトリが存在するためスキップ)"
+      return
+    }
+  fi
+
+  mkdir -p "$(dirname "$target_dir")"
+  git -C "$bare" worktree add --detach --quiet "$target_dir" "$ref"
+  echo "  [create] $label (detached at $ref)"
+}
+
+# 展開先エージェント一覧（dev スロットは存在するぶんだけ自動検出）
+declare -a AGENT_DIRS=()
+for slot in "$SCRIPT_DIR"/dev/slot-*/; do
+  [[ -d "$slot" ]] && AGENT_DIRS+=("${slot%/}")
+done
+AGENT_DIRS+=("$SCRIPT_DIR/investigate")
+AGENT_DIRS+=("$SCRIPT_DIR/review")
+
+if [[ ${#REPO_NAMES[@]} -gt 0 ]]; then
+  echo ""
+  echo "==> worktree を展開中..."
+fi
+
+for agent_dir in "${AGENT_DIRS[@]}"; do
+  mkdir -p "$agent_dir/repos"
+  for i in "${!REPO_NAMES[@]}"; do
+    name="${REPO_NAMES[$i]}"
+    branch="${REPO_BRANCHES[$i]}"
+    bare="$BARE_DIR/${name}.git"
+    rel="${agent_dir#"$SCRIPT_DIR"/}"
+    create_worktree "$bare" "$agent_dir/repos/$name" "origin/$branch" "$rel/repos/$name"
+  done
+done
+
+# --------------------------------------------------
+# settings.local.json setup
+# --------------------------------------------------
+
+echo ""
+echo "==> settings.local.json を準備中..."
+
+setup_settings() {
+  local target="$1"
+  local example="$1.example"
+
+  if [[ -f "$target" ]]; then
+    echo "  [skip]    $target (already exists)"
+  elif [[ -f "$example" ]]; then
+    cp "$example" "$target"
+    echo "  [created] $target (example から作成 -- 値を埋めてください)"
+  fi
+}
+
+setup_settings "$SCRIPT_DIR/.claude/settings.local.json"
+
+# --------------------------------------------------
+# Summary
+# --------------------------------------------------
+
+echo ""
+echo "=== Setup complete ==="
+echo ""
+
+if [[ ${#REPO_NAMES[@]} -eq 0 ]]; then
+  echo "リポジトリ未設定のため worktree は作成されていません。"
+  echo "repos.conf に追記して ./setup.sh を再実行してください。"
+else
+  echo "リポジトリ: ${#REPO_NAMES[@]}件 / エージェント: ${#AGENT_DIRS[@]}箇所"
+  echo ""
+  echo "次のステップ:"
+  echo "  1. .claude/settings.local.json を編集して環境変数を設定"
+  echo "  2. Claude Code を起動して /bootstrap を実行"
+  echo "     → AI が repos/ を読んで各エージェントの CLAUDE.md を案件仕様で埋めます"
+fi
+echo ""

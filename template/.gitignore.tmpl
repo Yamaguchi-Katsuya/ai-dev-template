@@ -1,0 +1,22 @@
+# 対象リポジトリの実体（デバイスごとに ./setup.sh で生成する）
+# .bare/ は bare clone 置き場、repos/ はそこから生やした worktree。
+.bare/
+dev/slot-*/repos/
+investigate/repos/
+review/repos/
+
+# Local-only Claude settings (contains API keys, device-specific paths)
+.claude/settings.local.json
+**/settings.local.json
+
+# Claude memory (device-local)
+.claude/memory/
+**/.claude/memory/
+**/MEMORY.md
+
+# Review handoffs (ephemeral)
+review/handoffs/*
+!review/handoffs/.gitkeep
+
+# macOS
+.DS_Store

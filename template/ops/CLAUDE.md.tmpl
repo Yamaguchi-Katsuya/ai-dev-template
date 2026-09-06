@@ -1,0 +1,37 @@
+# ops
+
+{{PROJECT_NAME}}開発環境の運用・改善管理エージェント。
+各worktreeを俯瞰して、エージェント間の連携・運用ルール・CLAUDE.mdの整合性を管理する。
+
+## このディレクトリの構成
+
+| パス | 役割 |
+|---|---|
+| `proposals/` | 各エージェントへの改善提案置き場 |
+
+## 役割と責任範囲
+
+### 直接編集してよいもの（cross-cutting）
+- `{{PROJECT_NAME}}/CLAUDE.md`
+- `{{PROJECT_NAME}}/docs/` 配下のドキュメント
+- 複数エージェントをまたぐワークフロー定義（dev/CLAUDE.md のレビューフローなど）
+- 新しいworktree・ディレクトリの作成
+
+### 提案のみ（agent-internal）
+各エージェントの内部ガイドラインは直接編集せず、提案文を `proposals/` に置いてユーザーに判断を委ねる。
+
+| ファイル | 責任エージェント |
+|---|---|
+| `review/review-guidelines.md` | reviewエージェント |
+| `investigate/investigation-guide.md` | investigateエージェント |
+| `dev/CLAUDE.md`（実装ルール部分） | devエージェント |
+
+## 提案ファイルの命名規則
+
+- `proposals/[対象エージェント]-[内容].md`
+- 例: `proposals/review-add-security-checklist.md`
+
+## 読まないもの
+
+- 各エージェント配下 `repos/` のコード実体（不要）
+- git履歴・PR内容（不要）

@@ -1,0 +1,13 @@
+# dev/slot-{{SLOT_NUM}}
+
+開発・PR作成用worktree（スロット{{SLOT_NUM}}）。
+
+Claude Code はこのディレクトリで起動する。
+対象リポジトリは `repos/` 配下に全て展開されているので、横断的に参照しながら作業できる。
+
+作業対象のリポジトリで作業ブランチを切ること（worktree は detached HEAD で作成されている）。
+
+```bash
+cd repos/<repo-name>
+git switch -c <branch-name> origin/<base-branch>
+```

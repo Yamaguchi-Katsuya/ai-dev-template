@@ -1,0 +1,73 @@
+# {{PROJECT_NAME}}
+
+Claude Code を複数の専門エージェントとして並列起動し、開発を自律的に進めるAI開発環境。
+
+## Quick Start
+
+1. 対象リポジトリを定義:
+   ```bash
+   vi repos.conf   # <name> <clone-url> <base-branch> を1行ずつ記入
+   ```
+
+2. セットアップスクリプトを実行:
+   ```bash
+   ./setup.sh      # bare clone + 全エージェントへ worktree 展開
+   ```
+
+3. 環境変数を設定:
+   ```bash
+   vi .claude/settings.local.json
+   ```
+
+4. 案件仕様をAIに書かせる:
+   ```bash
+   claude          # プロジェクトルートで起動して /bootstrap を実行
+   ```
+
+5. 開発開始:
+   ```bash
+   cd dev/slot-1 && claude
+   ```
+
+## ディレクトリ構成
+
+```
+{{PROJECT_NAME}}/
+├── CLAUDE.md                  # 共通設定（全エージェントに自動適用）
+├── repos.conf                 # 対象リポジトリ定義
+├── setup.sh                   # bare clone + worktree 展開（冪等）
+├── .bare/                     # 各リポジトリの bare clone（git管理外）
+├── .claude/
+│   ├── commands/bootstrap.md  # 案件仕様をAIに書かせるコマンド
+│   └── settings.local.json    # 環境変数（git管理外）
+├── docs/                      # 共通ドキュメント
+├── dev/
+│   ├── slot-1/repos/          # 開発スロット1（全リポジトリの worktree）
+│   ├── slot-2/repos/          # 開発スロット2（全リポジトリの worktree）
+│   └── ...
+├── investigate/repos/         # 調査用（全リポジトリ・読み取り専用）
+├── review/repos/              # レビュー用（全リポジトリ・読み取り専用）
+├── knowledge/                 # ドメイン・運用知識管理
+└── ops/                       # 環境運用・改善管理
+```
+
+各エージェント配下に**全リポジトリが横並びで展開される**ため、
+BE / FE / インフラが別リポジトリでもエージェントは横断的に参照できる。
+
+## このテンプレートの設計方針
+
+テンプレートが持つのは**エージェントの役割分担とディレクトリの骨格のみ**。
+言語・フレームワーク・ビルドコマンド・ブランチ運用・ドメイン知識といった
+案件固有の情報は一切含まない。
+
+それらは `/bootstrap` で AI が `repos/` 配下を読み取り、
+各エージェントの `CLAUDE.md` やドキュメントに書き込んでいく。
+
+## ドキュメント
+
+詳細は `docs/` を参照:
+
+- [環境概要](docs/environment-overview.md) -- エージェント構成と開発フロー
+- [Worktree構成](docs/worktree-structure.md) -- 各ディレクトリの役割と制約
+- [ブランチ構成](docs/branch-structure.md) -- ブランチ運用ルール（bootstrap で生成）
+- [Planning規約](docs/planning.md) -- 調査・設計ドキュメントの書き方
